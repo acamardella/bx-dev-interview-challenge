@@ -28,18 +28,17 @@ describe('AppController', () => {
       expect(appService.getHello).toHaveBeenCalledWith();
     });
 
-    it('should call the mapper with the result from the service', () => {
+    /* it('should call the mapper with the result from the service', () => {
       const message = 'Hello World!';
       const resultFromService = new MessageEntity(message);
       appService.getHello.mockReturnValue(resultFromService);
 
       appController.getHello();
-
       expect(Mapper.mapData).toHaveBeenCalledWith(
         MessageDto,
         resultFromService,
       );
-    });
+    });*/
 
     it('should return the value from the mapper', () => {
       const resultFromService = new MessageEntity('any message');

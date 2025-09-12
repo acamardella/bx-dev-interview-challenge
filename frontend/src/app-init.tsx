@@ -21,6 +21,10 @@ import Grid from "@mui/material/Grid";
 import theme from "./theme";
 import { useMemo } from "react";
 import { ExampleService } from "./services/example.service";
+import Login from "./login";
+ import { Link } from 'react-router-dom';
+
+
 
 function App() {
   const exampleService = useMemo(function initExampleService() {
@@ -40,6 +44,8 @@ function App() {
               <Button color="inherit">Login</Button>
             </Toolbar>
           </AppBar>
+
+          
 
           <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
             <Grid container spacing={3}>
@@ -62,11 +68,10 @@ function App() {
                       Funzionalità 1
                     </Typography>
                     <Typography sx={{ mb: 1.5 }} color="text.secondary">
-                      Descrizione della prima funzionalità
+                      Login
                     </Typography>
                     <Typography variant="body2">
-                      Qui puoi aggiungere la tua prima funzionalità. Material-UI
-                      è ora configurato e funzionante.
+                      <Login/>
                     </Typography>
                   </CardContent>
                   <CardActions>
@@ -82,11 +87,15 @@ function App() {
                       Funzionalità 2
                     </Typography>
                     <Typography sx={{ mb: 1.5 }} color="text.secondary">
-                      Descrizione della seconda funzionalità
+                      Upload e lista file caricati
                     </Typography>
+                   
+                   
                     <Typography variant="body2">
-                      Qui puoi aggiungere la tua seconda funzionalità. Tutti i
-                      componenti Material-UI sono disponibili.
+                     <Button color="inherit">
+                        <Link to="/upload">Upload/Download file</Link>
+                      </Button>
+
                     </Typography>
                   </CardContent>
                   <CardActions>
