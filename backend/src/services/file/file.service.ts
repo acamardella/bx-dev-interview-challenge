@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ServiceUnavailableException} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import {
   S3Client,
@@ -45,50 +45,66 @@ export class FileService {
   }
 
   async createMultipartUpload(fileName: string, contentType: string) {
-    const command = new CreateMultipartUploadCommand({
-      Bucket: process.env.S3_BUCKET_NAME!,
-      Key: fileName,
-      ContentType: contentType,
-    });
 
-    const response = await this.s3.send(command);
-    return { uploadId: response.UploadId, key: response.Key };
+      try {     
+          const command = new CreateMultipartUploadCommand({
+            Bucket: process.env.S3_BUCKET_NAME!,
+            Key: fileName,
+            ContentType: contentType,
+          });
+
+          const response = await this.s3.send(command);
+          return { uploadId: response.UploadId, key: response.Key };
+      } catch (error) {
+          throw new ServiceUnavailableException('Errore inizializzazione caricamento S3');
+      }
   }
 
   async getPresignedPartUrl(key: string, uploadId: string, partNumber: number) {
-    const command = new UploadPartCommand({
-      Bucket: process.env.S3_BUCKET_NAME!,
-      Key: key,
-      UploadId: uploadId,
-      PartNumber: partNumber,
-    });
-    const signUrl = await getSignedUrl(this.s3, command, { expiresIn: 3600 });
-    return signUrl;
+      try {
+          const command = new UploadPartCommand({
+            Bucket: process.env.S3_BUCKET_NAME!,
+            Key: key,
+            UploadId: uploadId,
+            PartNumber: partNumber,
+          });
+          const signUrl = await getSignedUrl(this.s3, command, { expiresIn: 3600 });
+          return signUrl;
+
+       } catch (error) {
+          throw new ServiceUnavailableException('Errore generazione URL caricamento S3');
+
+      }
   }
 
   async completeMultipartUpload(key: string, uploadId: string) {
-    // Recupera parti caricate da S3
-    const listed = await this.s3.send(
-      new ListPartsCommand({
-        Bucket: process.env.S3_BUCKET_NAME!,
-        Key: key,
-        UploadId: uploadId,
-      }),
-    );
 
-    const parts = (listed.Parts || []).map((p) => ({
-      ETag: p.ETag,
-      PartNumber: p.PartNumber!,
-    }));
+    try {
+        // Recupera parti caricate da S3
+        const listed = await this.s3.send(
+          new ListPartsCommand({
+            Bucket: process.env.S3_BUCKET_NAME!,
+            Key: key,
+            UploadId: uploadId,
+          }),
+        );
 
-    const command = new CompleteMultipartUploadCommand({
-      Bucket: process.env.S3_BUCKET_NAME!,
-      Key: key,
-      UploadId: uploadId,
-      MultipartUpload: { Parts: parts },
-    });
+        const parts = (listed.Parts || []).map((p) => ({
+          ETag: p.ETag,
+          PartNumber: p.PartNumber!,
+        }));
 
-    return this.s3.send(command);
+        const command = new CompleteMultipartUploadCommand({
+          Bucket: process.env.S3_BUCKET_NAME!,
+          Key: key,
+          UploadId: uploadId,
+          MultipartUpload: { Parts: parts },
+        });
+
+        return this.s3.send(command);
+    } catch (error) {
+      throw new ServiceUnavailableException('Errore completamento caricamento S3');
+    }
   }
 
   async getDownloadUrl(key: string) {
@@ -97,7 +113,6 @@ export class FileService {
       Key: key,
     });
     const signUrl = await getSignedUrl(this.s3, command, { expiresIn: 3600 });
-    console.log('Generated presigned URL DOWNLOAD:', signUrl);
     return signUrl;
   }
 
@@ -124,35 +139,43 @@ export class FileService {
   }
 
   async listFiles() {
-    const bucket = process.env.S3_BUCKET_NAME!;
-    const command = new ListObjectsV2Command({
-      Bucket: bucket,
-    });
 
-    const res = await this.s3.send(command);
-    const contents = res.Contents || [];
+    try {
 
-    // Genera un presigned URL per ogni file
-    const files = await Promise.all(
-      contents.map(async (item) => {
-        const getCommand = new GetObjectCommand({
-          Bucket: bucket,
-          Key: item.Key!,
-        });
+      const bucket = process.env.S3_BUCKET_NAME!;
+      const command = new ListObjectsV2Command({
+        Bucket: bucket,
+      });
 
-        const url = await getSignedUrl(this.s3, getCommand, {
-          expiresIn: 3600,
-        });
+      const res = await this.s3.send(command);
+      const contents = res.Contents || [];
 
-        return {
-          key: item.Key,
-          size: item.Size,
-          lastModified: item.LastModified,
-          url,
-        };
-      }),
-    );
-    console.log('List of files with presigned URLs:', files);
-    return files;
+      // Genera un presigned URL per ogni file
+      const files = await Promise.all(
+        contents.map(async (item) => {
+          const getCommand = new GetObjectCommand({
+            Bucket: bucket,
+            Key: item.Key!,
+          });
+
+          const url = await getSignedUrl(this.s3, getCommand, {
+            expiresIn: 3600,
+          });
+
+          return {
+            key: item.Key,
+            size: item.Size,
+            lastModified: item.LastModified,
+            url,
+          };
+        }),
+      );
+      return files;
+      
+    } catch (error) {
+      throw new ServiceUnavailableException('Errore listing file S3, verifica le configurazioni nel backend');
+      
+    }
+    
   }
 }

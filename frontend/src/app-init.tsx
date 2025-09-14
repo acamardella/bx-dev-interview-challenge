@@ -19,7 +19,7 @@ import {
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import theme from "./theme";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ExampleService } from "./services/example.service";
 import Login from "./login";
  import { Link } from 'react-router-dom';
@@ -27,9 +27,19 @@ import Login from "./login";
 
 
 function App() {
-  const exampleService = useMemo(function initExampleService() {
-    return new ExampleService();
-  }, []);
+    const exampleService = useMemo(function initExampleService() {
+      return new ExampleService();
+    }, []);
+  
+    const [disabled, setDisabled] = useState(true);
+
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    
+    useEffect(() => {
+      if (token) {
+        setDisabled(false);
+      }
+    }, []);
 
   return (
     <StyledEngineProvider injectFirst>
@@ -74,9 +84,6 @@ function App() {
                       <Login/>
                     </Typography>
                   </CardContent>
-                  <CardActions>
-                    <Button size="small">Scopri di più</Button>
-                  </CardActions>
                 </Card>
               </Grid>
 
@@ -90,9 +97,8 @@ function App() {
                       Upload e lista file caricati
                     </Typography>
                    
-                   
                     <Typography variant="body2">
-                     <Button color="inherit">
+                     <Button color="inherit" disabled={disabled}>
                         <Link to="/upload">Upload/Download file</Link>
                       </Button>
 

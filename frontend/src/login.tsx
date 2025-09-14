@@ -5,9 +5,12 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (event:React.FormEvent) => {
     event.preventDefault();
+    setLoading(true);
+    setMessage("");
 
     try {
       const res = await fetch(process.env.PUBLIC_API_BASE + "/auth/login", {
@@ -28,11 +31,13 @@ export default function Login() {
     } catch (err) {
       setMessage(`❌ Errore: ${err}`);
     }
+    finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div style={{ padding: 30 }}>
-      <h1>Login</h1>
+    <div style={{ padding: 5 }}>
       <form onSubmit={handleSubmit}>
         <input
           type="email"
@@ -48,7 +53,23 @@ export default function Login() {
           onChange={(e) => setPassword(e.target.value)}
           required
         /><br/>
-        <button type="submit">Entra</button>
+        <button type="submit" disabled={loading}>
+          {loading ? (
+            <span
+              style={{
+                width: "16px",
+                height: "16px",
+                border: "2px solid #fff",
+                borderTop: "2px solid transparent",
+                borderRadius: "50%",
+                display: "inline-block",
+                animation: "spin 1s linear infinite"
+              }}
+            />
+          ) : (
+            "Entra"
+          )}
+        </button>
       </form>
       {message && <p>{message}</p>}
     </div>

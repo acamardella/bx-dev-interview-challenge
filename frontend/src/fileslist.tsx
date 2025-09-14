@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import type { FileItem } from "./utils/type";
-
+import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
 
 type Props = {
   newFile?: FileItem | null;
@@ -18,7 +18,7 @@ const FilesList: React.FC<Props> = ({ newFile }) => {
         const data: FileItem[] = await res.json();
         setFiles(data);
       } catch (err) {
-        console.error("Errore fetch files:", err);
+        throw err;
       } finally {
         setLoading(false);
       }
@@ -42,34 +42,38 @@ const FilesList: React.FC<Props> = ({ newFile }) => {
       {files.length === 0 ? (
         <p>Nessun file trovato.</p>
       ) : (
-        <table className="min-w-full border border-gray-300 rounded-lg">
-          <thead>
-            <tr className="bg-gray-100 text-left">
-              <th className="p-2 border">Nome file</th>
-              <th className="p-2 border">Dimensione</th>
-              <th className="p-2 border">Ultima modifica</th>
-              <th className="p-2 border">Download</th>
-            </tr>
-          </thead>
-          <tbody>
-            {files.map((file) => (
-              <tr key={file.key} className="hover:bg-gray-50">
-                <td className="p-2 border">{file.key}</td>
-                <td className="p-2 border">
-                  {(file.size / 1024 / 1024).toFixed(2)} MB
-                </td>
-                <td className="p-2 border">
-                  {new Date(file.lastModified).toLocaleString()}
-                </td>
-                <td className="p-2 border text-blue-600 underline">
-                  <a href={file.url} target="_blank" rel="noopener noreferrer">
-                    Scarica
-                  </a>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+
+      <TableContainer component={Paper}>
+            <Table sx={{ minWidth: 650 }} aria-label="simple table">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Nome</TableCell>
+                  <TableCell align="right">Dimensione</TableCell>
+                  <TableCell align="right">Modificato</TableCell>
+                  <TableCell align="right">Scarica</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {files.map((file) => (
+                  <TableRow
+                    key={file.key}
+                    sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                  >
+                    <TableCell component="th" scope="row">
+                      {file.key}
+                    </TableCell>
+                    <TableCell align="right">{(file.size / 1024 / 1024).toFixed(2)} MB</TableCell>
+                    <TableCell align="right">{new Date(file.lastModified).toLocaleString()}</TableCell>
+                    <TableCell align="right">
+                      <a href={file.url} target="_blank" rel="noopener noreferrer">
+                        Scarica
+                      </a>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
       )}
     </div>
   );

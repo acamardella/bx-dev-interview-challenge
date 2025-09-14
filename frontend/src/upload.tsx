@@ -12,6 +12,7 @@ export default function UploadPage() {
 
   const API_BASE = process.env.PUBLIC_API_BASE + "/files"; // NestJS API
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  
   useEffect(() => {
     if (!token) {
       window.location.href = "/";
@@ -31,11 +32,11 @@ export default function UploadPage() {
   const uploadFile = async () => {
     try {
         if (!file) {
-          setMessage("❌ seleziona un file video");
+          setMessage("❌ Seleziona un file video");
           return;
         }
         if(file.size > MAX_FILE_SIZE) {
-          setMessage("❌ Errore "+ file.name + " supera i 500MB");
+          setMessage("❌ Errore "+ file.name + " supera 500MB");
           return;
 
         }
@@ -66,8 +67,8 @@ export default function UploadPage() {
                 `${API_BASE}/url?key=${key}&uploadId=${uploadId}&partNumber=${partNumber}`
               );
           const presignedUrl = await res.text();
-          console.log('Presigned URL:', presignedUrl);
-          // 2. PUT diretto a S3
+          
+
           await fetch(presignedUrl, {
             method: "PUT",
             body: blob,
@@ -90,13 +91,12 @@ export default function UploadPage() {
         
         const metaRes = await fetch(`${API_BASE}/meta?key=${file.name}`);
         if (!metaRes.ok) throw new Error("Errore fetch metadata file");
-        console.log('metaRes call ', metaRes)
         const newFileMeta: FileItem = await metaRes.json();
 
         setNewFile(newFileMeta);
 
     } catch (err) {
-       setMessage("❌ Errore durante upload: " + err);
+       setMessage("❌ Errore upload: " + err);
     }
     finally {
       setFile(null);
